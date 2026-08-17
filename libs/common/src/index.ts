@@ -6,3 +6,4 @@ export * from "./public.decorator";
 export * from "./roles.decorator";
 export * from "./roles.guard";
 export * from "./s2s";
+export * from "./seed";

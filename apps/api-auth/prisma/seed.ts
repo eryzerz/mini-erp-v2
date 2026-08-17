@@ -3,6 +3,7 @@ import path from "node:path";
 import { hash } from "@node-rs/argon2";
 import { config as loadEnv } from "dotenv";
 import { UserRole } from "@repo/contracts";
+import { SEED_COMPANY_ID } from "@repo/common";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
@@ -12,9 +13,9 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: proc
 
 async function main(): Promise<void> {
   await prisma.company.upsert({
-    where: { id: "e940aab4-ef25-4a40-a980-125c32054645" },
+    where: { id: SEED_COMPANY_ID },
     update: { name: "Sinergi Lintas Media" },
-    create: { id: "e940aab4-ef25-4a40-a980-125c32054645", name: "Sinergi Lintas Media" },
+    create: { id: SEED_COMPANY_ID, name: "Sinergi Lintas Media" },
   });
 
   const users = [
