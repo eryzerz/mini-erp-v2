@@ -34,7 +34,9 @@ async function bootstrap(): Promise<void> {
     .setVersion("1.0")
     .addBearerAuth()
     .build();
-  SwaggerModule.setup("api/docs", app, SwaggerModule.createDocument(app, document));
+  SwaggerModule.setup("docs", app, SwaggerModule.createDocument(app, document), {
+    useGlobalPrefix: true,
+  });
 
   const port = Number(config.get<string>("PORT") ?? 10000);
   await app.listen(port, "0.0.0.0");
