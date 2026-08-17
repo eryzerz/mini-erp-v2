@@ -1,0 +1,74 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+// The invoices service owns only its own database. companyId, customerId and
+// createdById are logical references into the auth / customers databases — no
+// FKs, no local tables (wayfinder ticket 06: per-service DBs, logical refs).
+// The customer name/taxId snapshot is captured from the customers service at
+// first SEND (the fleet's only cross-service read).
+model Invoice {
+  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  companyId    String              @db.Uuid
+  customerId   String              @db.Uuid
+  createdById  String              @db.Uuid
+  number       String?
+  status       InvoiceStatus       @default(DRAFT)
+  issueDate    DateTime?
+  dueDate      DateTime
+  paidAt       DateTime?
+  currency     String              @default("IDR")
+  subtotal     Decimal             @db.Decimal(19, 4)
+  taxTotal     Decimal             @db.Decimal(19, 4)
+  total        Decimal             @db.Decimal(19, 4)
+  customerName  String?
+  customerTaxId String?
+  items        InvoiceItem[]
+  history      InvoiceStatusChange[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([companyId, number])
+  @@index([companyId, status])
+  @@index([companyId, dueDate])
+  @@index([companyId, createdAt])
+}
+
+model InvoiceItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId   String   @db.Uuid
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  position    Int
+  description String
+  quantity    Decimal  @db.Decimal(12, 4)
+  unitPrice   Decimal  @db.Decimal(19, 4)
+  taxRate     Decimal  @db.Decimal(5, 2)
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
+}
+
+model InvoiceStatusChange {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId   String         @db.Uuid
+  invoice     Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  fromStatus  InvoiceStatus?
+  toStatus    InvoiceStatus
+  changedById String         @db.Uuid
+  at          DateTime       @default(now())
+
+  @@index([invoiceId])
+}

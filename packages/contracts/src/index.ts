@@ -49,6 +49,18 @@ export interface CustomerSummaryDto {
   name: string;
 }
 
+/**
+ * S2S boundary fact (ticket 05/11: typed contracts are the cross-service check).
+ * The customers service returns this over the internal endpoint; the invoices
+ * service consumes it to snapshot a customer at SEND.
+ */
+export interface InternalCustomerDto {
+  id: string;
+  name: string;
+  taxId: string | null;
+  companyId: string;
+}
+
 export interface InvoiceItemDto {
   id: string;
   description: string;

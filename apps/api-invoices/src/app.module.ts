@@ -4,12 +4,11 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
-import { JwtAuthGuard, InternalKeyGuard, RolesGuard } from "@repo/common";
+import { JwtAuthGuard, RolesGuard } from "@repo/common";
 
 import { AllExceptionsFilter } from "./common/all-exceptions.filter";
-import { CustomersModule } from "./customers/customers.module";
 import { HealthModule } from "./health/health.module";
-import { InternalModule } from "./internal/internal.module";
+import { InvoicesModule } from "./invoices/invoices.module";
 import { PrismaModule } from "./prisma.service";
 
 @Module({
@@ -29,19 +28,22 @@ import { PrismaModule } from "./prisma.service";
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 1000 }]),
     PrismaModule,
     HealthModule,
-    InternalModule,
-    CustomersModule,
+    InvoicesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: InternalKeyGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })
 export class AppModule {
   constructor(config: ConfigService) {
-    const required = ["DATABASE_URL_CUSTOMERS", "JWT_ACCESS_SECRET", "INTERNAL_API_KEY"];
+    const required = [
+      "DATABASE_URL_INVOICES",
+      "JWT_ACCESS_SECRET",
+      "INTERNAL_API_KEY",
+      "CUSTOMERS_SERVICE_URL",
+    ];
     const missing = required.filter((key) => !config.get<string>(key));
     if (missing.length > 0) {
       throw new BadRequestException(`Missing required env vars: ${missing.join(", ")}`);

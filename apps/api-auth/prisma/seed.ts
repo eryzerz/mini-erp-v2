@@ -3,7 +3,7 @@ import path from "node:path";
 import { hash } from "@node-rs/argon2";
 import { config as loadEnv } from "dotenv";
 import { UserRole } from "@repo/contracts";
-import { SEED_COMPANY_ID } from "@repo/common";
+import { SEED_COMPANY_ID, SEED_USER_ACCOUNTANT_ID, SEED_USER_ADMIN_ID } from "@repo/common";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
@@ -19,8 +19,8 @@ async function main(): Promise<void> {
   });
 
   const users = [
-    { id: "aa73da63-e26b-40a1-bb70-1c2b4c024870", email: "admin@slm.local", name: "Admin SLM", role: UserRole.ADMIN, password: "admin123" },
-    { id: "d17b0a2c-43ee-4c39-9e58-9b5e57e3f3b0", email: "accountant@slm.local", name: "Akuntan SLM", role: UserRole.ACCOUNTANT, password: "accountant123" },
+    { id: SEED_USER_ADMIN_ID, email: "admin@slm.local", name: "Admin SLM", role: UserRole.ADMIN, password: "admin123" },
+    { id: SEED_USER_ACCOUNTANT_ID, email: "accountant@slm.local", name: "Akuntan SLM", role: UserRole.ACCOUNTANT, password: "accountant123" },
   ];
   for (const user of users) {
     await prisma.user.upsert({
@@ -28,7 +28,7 @@ async function main(): Promise<void> {
       update: { name: user.name, role: user.role },
       create: {
         id: user.id,
-        companyId: "e940aab4-ef25-4a40-a980-125c32054645",
+        companyId: SEED_COMPANY_ID,
         email: user.email,
         name: user.name,
         role: user.role,

@@ -146,4 +146,31 @@ describe("Customers (e2e)", () => {
       .send({ name: "X", email: "not-an-email", phone: "abc" })
       .expect(400);
   });
+
+  describe("internal customers (S2S)", () => {
+    it("rejects a request without the internal key", async () => {
+      await request(app.getHttpServer())
+        .get("/api/v1/internal/customers/11111111-1111-4111-8111-111111111111")
+        .expect(401);
+    });
+
+    it("returns a customer fact for a valid internal key", async () => {
+      await request(app.getHttpServer())
+        .get("/api/v1/internal/customers/11111111-1111-4111-8111-111111111111")
+        .set("x-internal-key", process.env.INTERNAL_API_KEY!)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.id).toBe("11111111-1111-4111-8111-111111111111");
+          expect(res.body.name).toEqual(expect.any(String));
+          expect(res.body.companyId).toBe(companyA);
+        });
+    });
+
+    it("returns 404 for an unknown customer", async () => {
+      await request(app.getHttpServer())
+        .get("/api/v1/internal/customers/99999999-9999-4999-8999-999999999999")
+        .set("x-internal-key", process.env.INTERNAL_API_KEY!)
+        .expect(404);
+    });
+  });
 });
