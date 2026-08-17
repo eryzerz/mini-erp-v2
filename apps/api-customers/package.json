@@ -1,0 +1,21 @@
+{
+  "name": "@repo/api-customers",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@repo/common": "workspace:*",
+    "@repo/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "eslint": "^9.23.0",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.13.0",
+    "typescript": "^5.8.3"
+  }
+}

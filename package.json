@@ -1,0 +1,21 @@
+{
+  "name": "slm-erp-v2",
+  "private": true,
+  "packageManager": "pnpm@11.14.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "docker compose up -d && turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:prepare": "pnpm --filter @repo/api-auth db:prepare -- && pnpm --filter @repo/api-customers db:prepare -- && pnpm --filter @repo/api-invoices db:prepare --"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}

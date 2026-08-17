@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+.next/
+.turbo/
+coverage/
+src/generated/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+*.tsbuildinfo

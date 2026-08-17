@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "monorepo": true,
+  "collection": "@nestjs/schematics",
+  "projects": {
+    "api-auth": {
+      "type": "application",
+      "root": "apps/api-auth",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-auth/tsconfig.build.json"
+      }
+    },
+    "api-customers": {
+      "type": "application",
+      "root": "apps/api-customers",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-customers/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-customers/tsconfig.build.json"
+      }
+    },
+    "api-invoices": {
+      "type": "application",
+      "root": "apps/api-invoices",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-invoices/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-invoices/tsconfig.build.json"
+      }
+    },
+    "api-dashboard": {
+      "type": "application",
+      "root": "apps/api-dashboard",
+      "entryFile": "main",
+      "sourceRoot": "apps/api-dashboard/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/api-dashboard/tsconfig.build.json"
+      }
+    },
+    "common": {
+      "type": "library",
+      "root": "libs/common",
+      "entryFile": "index",
+      "sourceRoot": "libs/common/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/common/tsconfig.lib.json"
+      }
+    }
+  }
+}

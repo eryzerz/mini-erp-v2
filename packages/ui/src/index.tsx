@@ -1,0 +1,26 @@
+export * from "./components/ui/alert-dialog";
+export * from "./components/ui/avatar";
+export * from "./components/ui/badge";
+export * from "./components/ui/button";
+export * from "./components/ui/card";
+export * from "./components/ui/dialog";
+export * from "./components/ui/dropdown-menu";
+export * from "./components/ui/form";
+export * from "./components/ui/input";
+export * from "./components/ui/label";
+export * from "./components/ui/password-input";
+export * from "./components/ui/select";
+export * from "./components/ui/skeleton";
+export * from "./components/ui/sonner";
+export * from "./components/ui/table";
+export * from "./components/ui/tabs";
+export * from "./components/ui/textarea";
+
+// Chart is exported from "@repo/ui/chart" (subpath) on purpose — it is the only
+// component that pulls in recharts, and the barrel must not leak it into every
+// route's bundle.
+export * from "./components/date-picker";
+export * from "./components/currency-input";
+export * from "./components/empty-state";
+export { Pagination } from "./components/pagination-bar";
+export { cn } from "./lib/utils";

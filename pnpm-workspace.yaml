@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "libs/*"
+  - "packages/*"
+
+allowBuilds:
+  "@prisma/client": true
+  prisma: true
+  "@prisma/engines": true
+  "@node-rs/argon2": true
+  esbuild: true
+  "@tailwindcss/oxide": true
+  "@scarf/scarf": true

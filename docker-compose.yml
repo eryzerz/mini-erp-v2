@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: slm
+      POSTGRES_PASSWORD: slm
+      POSTGRES_DB: slm
+    ports:
+      - "5434:5432"
+    volumes:
+      - slm_erp_data:/var/lib/postgresql/data
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U slm -d slm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  slm_erp_data:
