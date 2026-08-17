@@ -7,7 +7,7 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { UserRole } from "@repo/contracts";
+import { InvoiceStatus, UserRole } from "@repo/contracts";
 import { config as loadEnv } from "dotenv";
 import request from "supertest";
 
@@ -320,5 +320,92 @@ describe("Invoices (e2e)", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({ customerId: "not-a-uuid", dueDate: "nope", items: [] })
       .expect(400);
+  });
+
+  describe("internal invoices summary (S2S)", () => {
+    const key = () => ({ "x-internal-key": process.env.INTERNAL_API_KEY! });
+
+    beforeAll(async () => {
+      // Self-contained slate: wipe, then insert exactly three known invoices.
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE "InvoiceStatusChange", "InvoiceItem", "Invoice" CASCADE`);
+      const now = Date.now();
+      const daysAgo = (days: number) => new Date(now - days * 86_400_000);
+      const invoice = async (
+        number: string,
+        status: InvoiceStatus,
+        total: number,
+        issuedDaysAgo: number,
+        dueInDays: number,
+        paidDaysAgo?: number,
+      ) => {
+        await prisma.invoice.create({
+          data: {
+            companyId: companyA,
+            customerId: customerA,
+            createdById: "aa73da63-e26b-40a1-bb70-1c2b4c024870",
+            number,
+            status,
+            issueDate: daysAgo(issuedDaysAgo),
+            dueDate: daysAgo(-dueInDays),
+            paidAt: paidDaysAgo !== undefined ? daysAgo(paidDaysAgo) : null,
+            customerName: "PT Maju Jaya",
+            subtotal: total,
+            taxTotal: 0,
+            total,
+          },
+        });
+      };
+      await invoice("INTERNAL-PAID", InvoiceStatus.PAID, 1000, 20, 10, 5);
+      await invoice("INTERNAL-SENT-OVERDUE", InvoiceStatus.SENT, 500, 30, -15);
+      await invoice("INTERNAL-SENT-OPEN", InvoiceStatus.SENT, 300, 2, 15);
+    });
+
+    it("rejects without the internal key", async () => {
+      const token = await tokenFor(UserRole.ADMIN, companyA);
+      await request(app.getHttpServer())
+        .get("/api/v1/internal/invoices/summary")
+        .set("Authorization", `Bearer ${token}`)
+        .expect(401);
+    });
+
+    it("rejects a key-only request without a user JWT", async () => {
+      await request(app.getHttpServer())
+        .get("/api/v1/internal/invoices/summary")
+        .set(key())
+        .expect(401);
+    });
+
+    it("aggregates scoped to the forwarded JWT's company", async () => {
+      const token = await tokenFor(UserRole.ADMIN, companyA);
+      const res = await request(app.getHttpServer())
+        .get("/api/v1/internal/invoices/summary")
+        .set("Authorization", `Bearer ${token}`)
+        .set(key())
+        .expect(200);
+
+      expect(res.body.revenue).toBe(1000);
+      expect(res.body.outstanding).toBe(800);
+      expect(res.body.overdue).toBe(500);
+      expect(res.body.countsByStatus).toEqual({ PAID: 1, SENT: 2 });
+      expect(res.body.recentInvoices).toHaveLength(3);
+      expect(res.body.recentInvoices[0].customer).toEqual({ id: customerA, name: "PT Maju Jaya" });
+      const month = new Date(Date.now() - 5 * 86_400_000).toISOString().slice(0, 7);
+      expect(res.body.monthlyRevenue).toContainEqual({ month, revenue: 1000 });
+    });
+
+    it("returns zeros for a company without invoices", async () => {
+      const token = await tokenFor(UserRole.ADMIN, companyB);
+      const res = await request(app.getHttpServer())
+        .get("/api/v1/internal/invoices/summary")
+        .set("Authorization", `Bearer ${token}`)
+        .set(key())
+        .expect(200);
+
+      expect(res.body.revenue).toBe(0);
+      expect(res.body.outstanding).toBe(0);
+      expect(res.body.overdue).toBe(0);
+      expect(res.body.countsByStatus).toEqual({});
+      expect(res.body.recentInvoices).toEqual([]);
+    });
   });
 });

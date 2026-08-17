@@ -10,7 +10,6 @@ import type { RequestWithUser } from "./jwt-auth.guard";
  * (wayfinder ticket 05: S2S = shared JWT + internal API keys, never network
  * trust). Register it as a global APP_GUARD; it passes everything except
  * @Internal() routes, which must present the shared x-internal-key header.
- * Combine with @Public() so the user-JWT guard does not intercept first.
  */
 @Injectable()
 export class InternalKeyGuard implements CanActivate {

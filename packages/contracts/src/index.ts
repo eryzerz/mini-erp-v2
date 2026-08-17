@@ -115,6 +115,21 @@ export interface InvoiceUpdateInput {
   items?: InvoiceCreateInput["items"];
 }
 
+/**
+ * S2S boundary contract (ticket 05/11). The invoices service computes these
+ * raw aggregates over its own database; the dashboard service re-shapes them
+ * into DashboardSummary. Money values are unformatted numbers — formatting is
+ * the dashboard's job.
+ */
+export interface InvoicesSummaryDto {
+  revenue: number;
+  outstanding: number;
+  overdue: number;
+  countsByStatus: Partial<Record<InvoiceStatus, number>>;
+  recentInvoices: InvoiceDto[];
+  monthlyRevenue: { month: string; revenue: number }[];
+}
+
 export interface Paginated<T> {
   items: T[];
   page: number;
