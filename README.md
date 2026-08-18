@@ -19,6 +19,25 @@ Sign in with the seeded accounts:
 | Admin | `admin@slm.local` | `admin123` |
 | Accountant | `accountant@slm.local` | `accountant123` |
 
+## Live URLs (production)
+
+Frontend — one origin, three apps routed by path:
+
+| App | URL |
+| --- | --- |
+| Dashboard (login, users) | https://mini-erp-v2-zone-dashboard.vercel.app |
+
+Customers and invoices live under the same origin (`/customers`, `/invoices`).
+
+Backend — one service per domain (Swagger under `/api/v1/docs`):
+
+| Service | Base URL |
+| ------- | -------- |
+| slm-api-auth | https://slm-api-auth.onrender.com/api/v1 |
+| slm-api-customers | https://slm-api-customers.onrender.com/api/v1 |
+| slm-api-invoices | https://slm-api-invoices.onrender.com/api/v1 |
+| slm-api-dashboard | https://slm-api-dashboard.onrender.com/api/v1 |
+
 ## Data model
 
 Four databases, one per service (`slm_auth`, `slm_customers`, `slm_invoices`).
