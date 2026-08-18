@@ -111,14 +111,55 @@ const server = createServer((req, res) => {
 });
 
 // Forward Next dev's HMR WebSocket (and any future upgrade) to the same target.
+// A raw net pipe would send only the leftover bytes after the request head, so
+// the upstream would never see a valid upgrade request. Replay the HTTP upgrade
+// request (with the client's Sec-WebSocket-Key) and relay the upstream's reply
+// either way: a real 101 (switch + byte pump both ways) or any non-upgrade
+// response (status line + headers + body), so the browser sees the truth and
+// can fall back gracefully.
 server.on("upgrade", (req, socket, head) => {
-  const target = targetFor(req.url ?? "/");
-  const upstream = net.connect(new URL(target).port, "127.0.0.1", () => {
-    upstream.write(head);
-    upstream.pipe(socket);
-    socket.pipe(upstream);
+  const target = new URL(targetFor(req.url ?? "/"));
+  // Connection resets on best-effort sockets are normal (clients navigate away,
+  // close early, or a probe reads its response and disconnects). Swallow them —
+  // an unhandled 'error' here would crash the whole proxy.
+  socket.on("error", () => {});
+  const upstream = httpRequest({
+    hostname: target.hostname,
+    port: target.port,
+    path: req.url,
+    method: "GET",
+    headers: {
+      ...req.headers,
+      host: target.host,
+      connection: "Upgrade",
+      upgrade: "websocket",
+    },
+  });
+  const headersOf = (res) =>
+    `${Object.entries({ ...res.headers })
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\r\n")}\r\n\r\n`;
+
+  upstream.on("upgrade", (res, upstreamSocket, upstreamHead) => {
+    upstreamSocket.on("error", () => socket.destroy());
+    socket.write(
+      `HTTP/1.1 ${res.statusCode ?? 101} ${res.statusMessage ?? "Switching Protocols"}\r\n` +
+        headersOf(res),
+    );
+    upstreamSocket.write(upstreamHead);
+    upstreamSocket.pipe(socket);
+    socket.pipe(upstreamSocket);
+  });
+  upstream.on("response", (res) => {
+    res.on("error", () => socket.destroy());
+    socket.write(
+      `HTTP/1.1 ${res.statusCode ?? 400} ${res.statusMessage ?? "Bad Request"}\r\n` +
+        headersOf(res),
+    );
+    res.pipe(socket);
   });
   upstream.on("error", () => socket.destroy());
+  upstream.end();
 });
 
 const shutdown = () => {
