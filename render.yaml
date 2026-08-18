@@ -1,0 +1,103 @@
+# Render Blueprint (wayfinder ticket 10): 4 free web services, one per backend
+# service, Docker runtime with the repo root as build context (the workspace
+# must build as a whole). Databases are Neon free (auth/customers/invoices);
+# secrets (DATABASE_URL_*, JWT_*, INTERNAL_API_KEY) use `sync: false` so they
+# are set in the Render dashboard and never live in the repo.
+#
+# NOTE: the onrender.com URLs below derive from each service's `name`; if a
+# service is renamed, update the *_SERVICE_URL references in its dependents.
+
+services:
+  # Auth: users + tokens. The single browser-facing identity service; also the
+  # target of the zones' /api/v1/auth and /api/v1/users rewrites.
+  - type: web
+    name: slm-api-auth
+    runtime: docker
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    dockerfilePath: ./apps/api-auth/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL_AUTH
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+
+  # Customers: customer CRUD; exposes /api/v1/internal/customers/:id for the
+  # invoices snapshot leg (S2S over the internal key).
+  - type: web
+    name: slm-api-customers
+    runtime: docker
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    dockerfilePath: ./apps/api-customers/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL_CUSTOMERS
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+
+  # Invoices: lifecycle + the fleet's only cross-service read (customer
+  # snapshot at SEND) against the customers service.
+  - type: web
+    name: slm-api-invoices
+    runtime: docker
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    dockerfilePath: ./apps/api-invoices/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL_INVOICES
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: CUSTOMERS_SERVICE_URL
+        value: https://slm-api-customers.onrender.com
+
+  # Dashboard: read-aggregate with no database; composes the invoices summary
+  # over S2S (forwarded user JWT + internal key).
+  - type: web
+    name: slm-api-dashboard
+    runtime: docker
+    plan: free
+    region: oregon
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    dockerfilePath: ./apps/api-dashboard/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: INVOICES_SERVICE_URL
+        value: https://slm-api-invoices.onrender.com

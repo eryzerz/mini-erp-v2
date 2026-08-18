@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.14.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The repo's compose DB (one Postgres instance + db-init) creates all six
+      # databases (auth/customers/invoices and their _test twins) on 5434, the
+      # exact topology every script and the e2e suites expect locally.
+      - name: Start database
+        run: |
+          docker compose up -d db
+          for _ in $(seq 1 30); do
+            docker compose exec -T db pg_isready -U slm -d slm && break
+            sleep 1
+          done
+
+      - name: Environment (non-secret local values + the *_TEST URLs)
+        run: cp .env.example .env
+
+      # Generates the gitignored Prisma clients, then migrates + seeds the dev
+      # databases.
+      - name: Prepare databases
+        run: pnpm db:prepare
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: E2E (per service)
+        run: pnpm test:e2e
+
+      # Boots the whole fleet as processes and asserts the boundary chain
+      # (login -> customers -> invoice send with snapshot -> dashboard).
+      - name: E2E (cross-fleet)
+        run: pnpm test:e2e:cross
+
+      # Deploys are native Git integrations on Render (blueprint services) and
+      # Vercel (zone projects); this workflow is validation only.
