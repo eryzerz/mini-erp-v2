@@ -73,8 +73,12 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
   // links into another zone are separate Next apps, so those stay plain
   // anchors — a full page load through the single origin, and no basePath
   // prepending (which would double /customers -> /customers/customers). The
-  // current zone is the one whose canonical path prefixes the URL.
-  const currentZone = ZONE_PATHS.find((zone) => pathname === zone || pathname.startsWith(`${zone}/`)) ?? "/";
+  // current zone is the one whose canonical path prefixes the URL. usePathname
+  // strips the zone's basePath (it returns "/" on the customers zone home), so
+  // the browser pathname is used; the shell renders after hydration only
+  // (SessionGate), so window is available.
+  const browserPath = typeof window === "undefined" ? pathname : window.location.pathname;
+  const currentZone = ZONE_PATHS.find((zone) => browserPath === zone || browserPath.startsWith(`${zone}/`)) ?? "/";
 
   const isSameZone = (href: string): boolean => {
     const path = pathOf(href);
@@ -99,7 +103,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
     <nav className="flex flex-col gap-1 p-3" aria-label="Main navigation">
       {NAV.filter((item) => !item.adminOnly || user?.role === "ADMIN").map((item) => {
         const path = pathOf(item.href);
-        const active = path !== "/" && pathname.startsWith(path);
+        const active = path !== "/" && browserPath.startsWith(path);
         const className = cn(
           "rounded-md px-3 py-2 text-sm font-medium transition-colors",
           FOCUS_RING,
