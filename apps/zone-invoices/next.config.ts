@@ -12,6 +12,12 @@ const localServices = {
 
 const nextConfig: NextConfig = {
   basePath: "/invoices",
+  // The dashboard project's edge rewrites route this zone by path prefix and
+  // forward the bare home as "/invoices/" (an empty :path* capture). A
+  // trailing-slash canonical home is what makes that hop a clean 200 instead
+  // of a 308 redirect loop, and client-side navigations to the home then get a
+  // valid RSC response instead of falling back to a full page load.
+  trailingSlash: true,
   transpilePackages: [
     "@repo/ui",
     "@repo/contracts",
