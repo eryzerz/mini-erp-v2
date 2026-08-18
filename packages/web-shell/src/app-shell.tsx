@@ -23,8 +23,8 @@ import { ZONE_BASE } from "./zone-bases";
 
 const NAV = [
   { href: `${ZONE_BASE.dashboard.replace(/\/$/, "")}/dashboard`, label: "Dashboard" },
-  { href: `${ZONE_BASE.customers}`, label: "Customers" },
-  { href: `${ZONE_BASE.invoices}`, label: "Invoices" },
+  { href: `${ZONE_BASE.customers}/list`, label: "Customers" },
+  { href: `${ZONE_BASE.invoices}/list`, label: "Invoices" },
   { href: `${ZONE_BASE.dashboard.replace(/\/$/, "")}/users`, label: "Users", adminOnly: true },
 ];
 
@@ -103,7 +103,8 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
     <nav className="flex flex-col gap-1 p-3" aria-label="Main navigation">
       {NAV.filter((item) => !item.adminOnly || user?.role === "ADMIN").map((item) => {
         const path = pathOf(item.href);
-        const active = path !== "/" && browserPath.startsWith(path);
+        const zonePath = ZONE_PATHS.find((zone) => path === zone || path.startsWith(`${zone}/`)) ?? path;
+        const active = zonePath !== "/" && browserPath.startsWith(zonePath);
         const className = cn(
           "rounded-md px-3 py-2 text-sm font-medium transition-colors",
           FOCUS_RING,

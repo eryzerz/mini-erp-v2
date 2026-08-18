@@ -334,7 +334,7 @@ export function InvoiceForm({ invoice }: { invoice?: InvoiceDto }) {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.push(invoice ? `/${invoice.id}` : "/")}>
+              <Button type="button" variant="outline" onClick={() => router.push(invoice ? `/${invoice.id}` : "/list")}>
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>

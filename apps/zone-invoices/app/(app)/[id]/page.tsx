@@ -41,7 +41,7 @@ export default function InvoiceDetailPage(): React.ReactElement {
       await deleteMutation.mutateAsync(params.id);
       toast.success("Invoice deleted");
       setConfirmAction(null);
-      router.push("/");
+      router.push("/list");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to delete invoice");
     }
@@ -98,7 +98,7 @@ export default function InvoiceDetailPage(): React.ReactElement {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/" aria-label="Back to invoices">
+            <Link href="/list" aria-label="Back to invoices">
               <ArrowLeft />
             </Link>
           </Button>
