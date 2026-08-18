@@ -69,17 +69,23 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
     }
   }, [mobileOpen]);
 
-  // Links within the current zone can use next/link (client-side navigation);
+  // The current zone is the one whose canonical path prefixes the URL; it is
+  // fixed per app, so the browser pathname read at render time is stable.
+  // usePathname strips the zone's basePath (it returns "/" on the customers
+  // zone home), so for zone apps the mount-stable currentZone is re-added to
+  // rebuild the full path. usePathname is also reactive: during client-side
+  // navigation it updates before window.location.pathname does, so the active
+  // item would otherwise stay stuck on the previous route.
+  const currentZone =
+    typeof window === "undefined"
+      ? "/"
+      : (ZONE_PATHS.find((zone) => window.location.pathname === zone || window.location.pathname.startsWith(`${zone}/`)) ?? "/");
+  const browserPath = currentZone === "/" ? pathname : `${currentZone}${pathname === "/" ? "" : pathname}`;
+
+  // Links within the current zone use next/link (client-side navigation);
   // links into another zone are separate Next apps, so those stay plain
   // anchors — a full page load through the single origin, and no basePath
-  // prepending (which would double /customers -> /customers/customers). The
-  // current zone is the one whose canonical path prefixes the URL. usePathname
-  // strips the zone's basePath (it returns "/" on the customers zone home), so
-  // the browser pathname is used; the shell renders after hydration only
-  // (SessionGate), so window is available.
-  const browserPath = typeof window === "undefined" ? pathname : window.location.pathname;
-  const currentZone = ZONE_PATHS.find((zone) => browserPath === zone || browserPath.startsWith(`${zone}/`)) ?? "/";
-
+  // prepending (which would double /customers -> /customers/customers).
   const isSameZone = (href: string): boolean => {
     const path = pathOf(href);
     if (currentZone === "/") {
