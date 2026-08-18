@@ -2,6 +2,7 @@
 
 import { LogOut, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -39,6 +40,15 @@ const initials = (name: string): string =>
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
+// The non-dashboard zones' canonical paths on the single origin; the dashboard
+// zone owns everything else (including "/").
+const ZONE_PATHS = ["/customers", "/invoices"] as const;
+
+const pathOf = (href: string): string => {
+  const path = href.replace(/^https?:\/\/[^/]+/, "");
+  return path === "" ? "/" : path;
+};
+
 export const AppShell = ({ children }: { children: React.ReactNode }): React.ReactElement => {
   const pathname = usePathname();
   const { user, logout } = useSession();
@@ -59,29 +69,59 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
     }
   }, [mobileOpen]);
 
+  // Links within the current zone can use next/link (client-side navigation);
+  // links into another zone are separate Next apps, so those stay plain
+  // anchors — a full page load through the single origin, and no basePath
+  // prepending (which would double /customers -> /customers/customers). The
+  // current zone is the one whose canonical path prefixes the URL.
+  const currentZone = ZONE_PATHS.find((zone) => pathname === zone || pathname.startsWith(`${zone}/`)) ?? "/";
+
+  const isSameZone = (href: string): boolean => {
+    const path = pathOf(href);
+    if (currentZone === "/") {
+      return !ZONE_PATHS.some((zone) => path === zone || path.startsWith(`${zone}/`));
+    }
+    return path !== "/" && (path === currentZone || path.startsWith(`${currentZone}/`));
+  };
+
+  // next/link hrefs are basePath-relative within the current zone, e.g. in the
+  // customers zone the Customers item becomes "/", resolving to /customers.
+  const sameZoneHref = (href: string): string => {
+    const path = pathOf(href);
+    if (currentZone === "/") {
+      return path;
+    }
+    const rest = path.startsWith(`${currentZone}/`) ? path.slice(currentZone.length) : "";
+    return rest === "" ? "/" : rest;
+  };
+
   const nav = (
     <nav className="flex flex-col gap-1 p-3" aria-label="Main navigation">
       {NAV.filter((item) => !item.adminOnly || user?.role === "ADMIN").map((item) => {
-        // Cross-zone links are plain anchors: next/link and the router
-        // auto-prepend this zone's basePath to relative hrefs (doubling
-        // /customers -> /customers/customers), and client-side navigation
-        // cannot cross into another Next app anyway — a full page load through
-        // the single-origin proxy is the only correct hop. Active state only
-        // meaningfully matches the current zone's link, so compare the
-        // pathname portion — no window access at render (also prerenders).
-        const path = item.href.replace(/^https?:\/\/[^/]+/, "");
-        const active = pathname.startsWith(path);
-        return (
+        const path = pathOf(item.href);
+        const active = path !== "/" && pathname.startsWith(path);
+        const className = cn(
+          "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          FOCUS_RING,
+          active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground",
+        );
+        return isSameZone(item.href) ? (
+          <Link
+            key={item.href}
+            href={sameZoneHref(item.href)}
+            onClick={() => setMobileOpen(false)}
+            aria-current={active ? "page" : undefined}
+            className={className}
+          >
+            {item.label}
+          </Link>
+        ) : (
           <a
             key={item.href}
             href={item.href}
             onClick={() => setMobileOpen(false)}
             aria-current={active ? "page" : undefined}
-            className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              FOCUS_RING,
-              active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
+            className={className}
           >
             {item.label}
           </a>
@@ -94,9 +134,15 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
     <div className="flex min-h-screen">
       <aside className="hidden w-56 shrink-0 border-r bg-card md:block">
         <div className="flex h-14 items-center border-b px-4">
-          <a href={ZONE_BASE.dashboard} className={`text-sm font-semibold tracking-tight rounded-sm ${FOCUS_RING}`}>
-            SLM <span className="text-primary">ERP</span>
-          </a>
+          {isSameZone(ZONE_BASE.dashboard) ? (
+            <Link href={sameZoneHref(ZONE_BASE.dashboard)} className={`text-sm font-semibold tracking-tight rounded-sm ${FOCUS_RING}`}>
+              SLM <span className="text-primary">ERP</span>
+            </Link>
+          ) : (
+            <a href={ZONE_BASE.dashboard} className={`text-sm font-semibold tracking-tight rounded-sm ${FOCUS_RING}`}>
+              SLM <span className="text-primary">ERP</span>
+            </a>
+          )}
         </div>
         {nav}
       </aside>
