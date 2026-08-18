@@ -138,7 +138,7 @@ export default function DashboardPage(): React.ReactElement {
               <CardTitle className="text-base">Recent invoices</CardTitle>
               <Button asChild variant="outline" size="sm">
                 {/* The invoices list lives in its own zone (ticket 07). */}
-                <Link href={`${ZONE_BASE.invoices}/invoices`}>View all</Link>
+                <Link href={`${ZONE_BASE.invoices}`}>View all</Link>
               </Button>
             </CardHeader>
             <CardContent>

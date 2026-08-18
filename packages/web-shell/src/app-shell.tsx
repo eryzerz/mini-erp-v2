@@ -22,10 +22,10 @@ import { useSession } from "@repo/web-shared";
 import { ZONE_BASE } from "./zone-bases";
 
 const NAV = [
-  { href: `${ZONE_BASE.dashboard}/dashboard`, label: "Dashboard" },
-  { href: `${ZONE_BASE.customers}/customers`, label: "Customers" },
-  { href: `${ZONE_BASE.invoices}/invoices`, label: "Invoices" },
-  { href: `${ZONE_BASE.dashboard}/users`, label: "Users", adminOnly: true },
+  { href: `${ZONE_BASE.dashboard.replace(/\/$/, "")}/dashboard`, label: "Dashboard" },
+  { href: `${ZONE_BASE.customers}`, label: "Customers" },
+  { href: `${ZONE_BASE.invoices}`, label: "Invoices" },
+  { href: `${ZONE_BASE.dashboard.replace(/\/$/, "")}/users`, label: "Users", adminOnly: true },
 ];
 
 const initials = (name: string): string =>

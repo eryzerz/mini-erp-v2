@@ -37,25 +37,32 @@ cp .env.example .env
 #    applies migrations, and seeds the dev databases
 pnpm db:prepare
 
-# 5. Run everything: APIs on :4001-:4004 and zones on :3000-:3002
+# 5. Run everything: a single browser origin on :3000 in front of the fleet
 pnpm dev
 ```
+
+`pnpm dev` starts the whole fleet with a single-origin entry point
+(`scripts/dev-web.mjs` — the same topology the Vercel edge provides in prod,
+which is what lets the shared session survive zone-to-zone navigation):
+
+| Origin :3000 path | Backed by |
+| ----------------- | --------- |
+| `/dashboard`, `/login`, `/users`, `/` | zone-dashboard (:3004) |
+| `/customers...` | zone-customers (:3001, `basePath /customers`) |
+| `/invoices...` | zone-invoices (:3002, `basePath /invoices`) |
+| `/api/v1/{auth,users,customers,invoices,dashboard}/*` | the API services (:4001-:4004) |
 
 Open **http://localhost:3000** and sign in with the seeded demo account:
 
 - Admin: `admin@slm.local` / `admin123`
 - Accountant: `accountant@slm.local` / `accountant123`
 
-Each zone proxies `/api/v1/{auth,users,customers,invoices,dashboard}/*` to the
-locally-running services, so the dashboard zone (`:3000`) is the entry point
-and its nav cross-links to the customers (`:3001`) and invoices (`:3002`)
-zones.
-
-Run a single app instead of all seven:
+To skip the proxy and hit each app directly on its own port, use
+`pnpm dev:apps` instead. To run a single app (no fleet), use the filter form:
 
 ```sh
 pnpm --filter @repo/api-invoices dev     # one API (auth/customers/invoices/dashboard)
-pnpm --filter @repo/zone-invoices dev    # one zone
+pnpm --filter @repo/zone-invoices dev    # one zone (on its own port)
 ```
 
 API docs (Swagger) live at `http://localhost:4001/api/v1/docs` (and the other

@@ -11,6 +11,7 @@ const localServices = {
 };
 
 const nextConfig: NextConfig = {
+  basePath: "/invoices",
   transpilePackages: [
     "@repo/ui",
     "@repo/contracts",

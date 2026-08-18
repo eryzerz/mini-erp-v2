@@ -164,11 +164,11 @@ export function InvoiceForm({ invoice }: { invoice?: InvoiceDto }) {
       if (invoice) {
         await updateMutation.mutateAsync({ id: invoice.id, data: payload });
         toast.success("Draft updated");
-        router.push(`/invoices/${invoice.id}`);
+        router.push(`/${invoice.id}`);
       } else {
         const created = await createMutation.mutateAsync(payload);
         toast.success("Draft invoice created");
-        router.push(`/invoices/${created.id}`);
+        router.push(`/${created.id}`);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save invoice");
@@ -334,7 +334,7 @@ export function InvoiceForm({ invoice }: { invoice?: InvoiceDto }) {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.push(invoice ? `/invoices/${invoice.id}` : "/invoices")}>
+              <Button type="button" variant="outline" onClick={() => router.push(invoice ? `/${invoice.id}` : "/")}>
                 Cancel
               </Button>
               <Button type="submit" disabled={submitting}>
