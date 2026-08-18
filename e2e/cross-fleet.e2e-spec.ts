@@ -1,5 +1,5 @@
 import type { ChildProcess } from "node:child_process";
-import { spawn } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -140,6 +140,11 @@ describe("Cross-fleet e2e", () => {
   };
 
   beforeAll(async () => {
+    // Ensure the per-service test DBs carry the deterministic seed data. The
+    // auth service's own e2e truncates slm_auth_test and seeds its own fixture
+    // admin, so this re-run (all seeds are idempotent) keeps the cross-fleet
+    // chain independent of which per-service suite ran first.
+    execSync("node e2e/prepare-test-dbs.mjs", { cwd: ROOT, stdio: "ignore" });
     await spawnFleet();
   });
 
