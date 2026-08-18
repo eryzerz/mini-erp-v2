@@ -21,6 +21,14 @@
     {
       "source": "/api/v1/dashboard/:path*",
       "destination": "https://slm-api-dashboard.onrender.com/api/v1/dashboard/:path*"
+    },
+    {
+      "source": "/customers/:path*",
+      "destination": "https://mini-erp-v2-zone-customers.vercel.app/customers/:path*"
+    },
+    {
+      "source": "/invoices/:path*",
+      "destination": "https://mini-erp-v2-zone-invoices.vercel.app/invoices/:path*"
     }
   ]
 }
