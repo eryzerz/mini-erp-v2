@@ -6,8 +6,8 @@ import { IS_INTERNAL_KEY } from "./internal.decorator";
 import type { RequestWithUser } from "./jwt-auth.guard";
 
 /**
- * Enforces the machine-to-machine key on endpoints marked @Internal()
- * (wayfinder ticket 05: S2S = shared JWT + internal API keys, never network
+ * Enforces the machine-to-machine key on endpoints marked @Internal() (S2S
+ * calls carry a shared JWT plus the internal API key, never bare network
  * trust). Register it as a global APP_GUARD; it passes everything except
  * @Internal() routes, which must present the shared x-internal-key header.
  */

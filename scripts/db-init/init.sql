@@ -1,4 +1,4 @@
--- One Postgres instance; one database per service (per the wayfinder decision).
+-- One Postgres instance; one database per service.
 SELECT 'CREATE DATABASE slm_auth' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'slm_auth')\gexec
 SELECT 'CREATE DATABASE slm_customers' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'slm_customers')\gexec
 SELECT 'CREATE DATABASE slm_invoices' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'slm_invoices')\gexec

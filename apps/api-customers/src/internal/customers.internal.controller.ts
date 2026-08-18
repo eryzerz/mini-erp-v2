@@ -6,11 +6,11 @@ import { Internal, Public } from "@repo/common";
 import { PrismaService } from "../prisma.service";
 
 /**
- * S2S surface (wayfinder ticket 05/06): other services fetch a customer fact
- * over the internal key when they must — the invoices service snapshots a
- * customer at SEND. Guards the same rows the authenticated API does, but the
- * caller (not this service) is responsible for company scoping; companyId is
- * returned so the caller can assert it.
+ * S2S surface: other services fetch a customer fact over the internal key when
+ * they must — the invoices service snapshots a customer at draft save and send.
+ * Guards the same rows the authenticated API does, but the caller (not this
+ * service) is responsible for company scoping; companyId is returned so the
+ * caller can assert it.
  */
 @ApiTags("internal")
 @Controller("internal/customers")

@@ -1,8 +1,8 @@
-# Render Blueprint (wayfinder ticket 10): 4 free web services, one per backend
-# service, Docker runtime with the repo root as build context (the workspace
-# must build as a whole). Databases are Neon free (auth/customers/invoices);
-# secrets (DATABASE_URL_*, JWT_*, INTERNAL_API_KEY) use `sync: false` so they
-# are set in the Render dashboard and never live in the repo.
+# Render Blueprint: 4 free web services, one per backend service, Docker
+# runtime with the repo root as build context (the workspace must build as a
+# whole). Databases are Neon free (auth/customers/invoices); secrets
+# (DATABASE_URL_*, JWT_*, INTERNAL_API_KEY) use `sync: false` so they are set
+# in the Render dashboard and never live in the repo.
 #
 # NOTE: the onrender.com URLs below derive from each service's `name`; if a
 # service is renamed, update the *_SERVICE_URL references in its dependents.

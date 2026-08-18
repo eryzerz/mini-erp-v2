@@ -36,7 +36,7 @@ import { HealthModule } from "./health/health.module";
 })
 export class AppModule {
   constructor(config: ConfigService) {
-    // No database (ticket 06: the dashboard is a read-aggregate over S2S).
+    // No database: the dashboard is a read-aggregate over S2S.
     const required = ["JWT_ACCESS_SECRET", "INTERNAL_API_KEY", "INVOICES_SERVICE_URL"];
     const missing = required.filter((key) => !config.get<string>(key));
     if (missing.length > 0) {

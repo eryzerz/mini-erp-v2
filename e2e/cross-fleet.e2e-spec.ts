@@ -10,8 +10,8 @@ import request from "supertest";
 loadEnv({ path: path.resolve(__dirname, "../.env"), quiet: true });
 
 /**
- * Cross-fleet e2e (ticket 11): boot the entire local fleet as real processes
- * against per-service test databases and assert the boundary chain:
+ * Cross-fleet e2e: boot the entire local fleet as real processes against
+ * per-service test databases and assert the boundary chain:
  *   login (auth) → list customers (customers) → create + send draft (invoices,
  *   exercising the customer-snapshot fetch over S2S) → dashboard reflects it.
  */

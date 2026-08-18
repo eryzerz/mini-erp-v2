@@ -3,7 +3,7 @@
 
 /* Shared packages live outside the app root; Tailwind v4's automatic source
    detection only scans the working directory, so classes used solely by these
-   packages never compiled without the @source directives (ticket 07 standard). */
+   packages need the @source directives to be compiled. */
 @source "../../../packages/ui/src";
 @source "../../../packages/web-shared/src";
 @source "../../../packages/web-shell/src";

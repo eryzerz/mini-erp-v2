@@ -12,8 +12,8 @@ interface DateWindow {
 /**
  * Raw dashboard aggregates computed over the invoices database, scoped to one
  * company (the caller's companyId comes from the forwarded user JWT). The
- * dashboard service has no database (wayfinder ticket 06) and re-shapes this
- * payload via the typed InvoicesSummaryDto boundary contract.
+ * dashboard service has no database and re-shapes this payload via the typed
+ * InvoicesSummaryDto boundary contract.
  */
 @Injectable()
 export class InvoicesSummaryService {

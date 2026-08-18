@@ -1,8 +1,8 @@
 /**
- * Migrate + seed the per-service TEST databases (ticket 06/11: the cross-fleet
- * e2e boots against slm_*_test). Reads the TEST URLs from the repo .env so they
- * have a single source of truth, then runs each service's db:prepare with the
- * test URL overriding its DATABASE_URL_*.
+ * Migrate + seed the per-service TEST databases (the cross-fleet e2e boots
+ * against slm_*_test). Reads the TEST URLs from the repo .env so they have a
+ * single source of truth, then runs each service's db:prepare with the test
+ * URL overriding its DATABASE_URL_*.
  */
 import { execSync } from "node:child_process";
 import path from "node:path";

@@ -107,11 +107,9 @@ export class CustomersService {
     return this.toDto(customer);
   }
 
-  // The monolith refused to delete a customer that had invoices by counting them
-  // in the same database. Customers no longer have invoices locally (wayfinder
-  // ticket 06: per-service DBs, one database per service), so that count is
-  // impossible here. Restoring the guard needs an S2S check against the invoices
-  // service (its DB owns invoice existence) — deferred until api-invoices lands.
+  // The old monolith refused to delete a customer that had invoices by counting
+  // them in the same database. Customers no longer own invoice data here, so a
+  // delete guard would need an S2S check against the invoices service.
   async remove(companyId: string, id: string): Promise<{ success: true }> {
     const existing = await this.prisma.customer.findFirst({ where: { id, companyId } });
     if (!existing) {

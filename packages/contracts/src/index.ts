@@ -50,9 +50,9 @@ export interface CustomerSummaryDto {
 }
 
 /**
- * S2S boundary fact (ticket 05/11: typed contracts are the cross-service check).
- * The customers service returns this over the internal endpoint; the invoices
- * service consumes it to snapshot a customer at SEND.
+ * S2S boundary fact: typed contracts are the cross-service check. The
+ * customers service returns this over the internal endpoint; the invoices
+ * service consumes it to snapshot a customer.
  */
 export interface InternalCustomerDto {
   id: string;
@@ -116,10 +116,10 @@ export interface InvoiceUpdateInput {
 }
 
 /**
- * S2S boundary contract (ticket 05/11). The invoices service computes these
- * raw aggregates over its own database; the dashboard service re-shapes them
- * into DashboardSummary. Money values are unformatted numbers — formatting is
- * the dashboard's job.
+ * S2S boundary contract. The invoices service computes these raw aggregates
+ * over its own database; the dashboard service re-shapes them into
+ * DashboardSummary. Money values are unformatted numbers — formatting is the
+ * dashboard's job.
  */
 export interface InvoicesSummaryDto {
   revenue: number;

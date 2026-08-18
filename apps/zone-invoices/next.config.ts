@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
-// Local parity with the Vercel edge (tickets 08/10): /api/v1/{prefix}/* is
-// proxied to the matching service port, so web-shared's same-origin requests
-// reach the locally-running fleet exactly like the shared origin does in prod.
+// Local parity with the Vercel edge: /api/v1/{prefix}/* is proxied to the
+// matching service port, so web-shared's same-origin requests reach the
+// locally-running fleet exactly like the shared origin does in prod.
 const localServices = {
   auth: "http://localhost:4001",
   customers: "http://localhost:4002",

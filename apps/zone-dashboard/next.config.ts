@@ -1,12 +1,11 @@
 import type { NextConfig } from "next";
 
-// Local parity with the Vercel edge (tickets 08/10): /api/v1/{prefix}/* is
-// proxied to the matching service port, so web-shared's same-origin requests
-// reach the locally-running fleet exactly like the shared origin does in prod.
-// `users` is served by the auth service but reached from the dashboard zone's
-// users admin (ticket 07), so it must be routed too — a fifth prefix beyond the
-// four ticket-08 domain prefixes. The Vercel edge must mirror this rule in prod
-// (the wayfinder tickets live upstream and are kept pristine).
+// Local parity with the Vercel edge: /api/v1/{prefix}/* is proxied to the
+// matching service port, so web-shared's same-origin requests reach the
+// locally-running fleet exactly like the shared origin does in prod. `users`
+// is served by the auth service but reached from the dashboard zone's users
+// admin, so it must be routed too — a fifth prefix beyond the four domain
+// prefixes. The Vercel edge must mirror this rule in prod.
 const localServices = {
   auth: "http://localhost:4001",
   users: "http://localhost:4001",

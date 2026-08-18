@@ -6,10 +6,10 @@ import type { UserRole } from "@repo/contracts";
 import { useSession } from "@repo/web-shared";
 
 /**
- * Route-level assignment gate (ticket 07: the users admin page is ADMIN-only).
- * SessionGate above it already guarantees an authenticated user; this one
- * additionally redirects users whose role isn't in `roles` to `fallback`.
- * Like SessionGate it renders nothing while deciding, to avoid a flash.
+ * Route-level assignment gate: the users admin page is ADMIN-only. SessionGate
+ * above it already guarantees an authenticated user; this one additionally
+ * redirects users whose role isn't in `roles` to `fallback`. Like SessionGate
+ * it renders nothing while deciding, to avoid a flash.
  */
 export const RoleGate = ({
   roles,

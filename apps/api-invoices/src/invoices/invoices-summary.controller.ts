@@ -7,10 +7,10 @@ import { InternalSummaryQueryDto } from "./invoices-summary.dto";
 import { InvoicesSummaryService } from "./invoices-summary.service";
 
 /**
- * S2S surface for the dashboard service (tickets 05/06/08): the dashboard has
- * no database, so it forwards the caller's user JWT here; JwtAuthGuard scopes
- * to the caller's company and InternalKeyGuard supplies the machine
- * credential. Not @Public() — a valid user token is required on this leg.
+ * S2S surface for the dashboard service: the dashboard has no database, so it
+ * forwards the caller's user JWT here; JwtAuthGuard scopes to the caller's
+ * company and InternalKeyGuard supplies the machine credential. Not
+ * @Public() — a valid user token is required on this leg.
  */
 @ApiTags("internal")
 @Controller("internal/invoices")

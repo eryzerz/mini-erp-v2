@@ -16,7 +16,7 @@ export interface AuthUser {
 export interface RequestWithUser {
   user: AuthUser;
   // The raw bearer token, for services that forward the caller's JWT on an
-  // S2S leg (wayfinder ticket 05) — e.g. the dashboard to the invoices service.
+  // S2S leg — e.g. the dashboard to the invoices service.
   token: string;
   headers: Record<string, string | string[] | undefined>;
 }

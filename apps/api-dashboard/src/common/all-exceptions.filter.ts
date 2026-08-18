@@ -9,7 +9,7 @@ interface ErrorBody {
   };
 }
 
-// Dashboard has no database (ticket 06) and therefore no Prisma error branch.
+// Dashboard has no database, so there is no Prisma error branch.
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {

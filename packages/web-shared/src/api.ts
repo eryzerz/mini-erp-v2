@@ -1,10 +1,10 @@
 import type { LoginResponse } from "@repo/contracts";
 
-// Same-origin by default (wayfinder tickets 08/10): the browser only talks to
-// its own origin — the Vercel edge rewrites /api/v1/* to the matching service
-// in production, and each zone's next.config mirrors those rewrites locally.
-// No per-zone API env is needed (ticket 10), and same-origin zones SHARE
-// sessionStorage, which is how the refresh token survives zone hops.
+// Same-origin by default: the browser only talks to its own origin — the Vercel
+// edge rewrites /api/v1/* to the matching service in production, and each
+// zone's next.config mirrors those rewrites locally. No per-zone API env is
+// needed, and same-origin zones SHARE sessionStorage, which is how the refresh
+// token survives zone hops.
 const API_URL = "";
 
 const REFRESH_KEY = "slm.refreshToken";

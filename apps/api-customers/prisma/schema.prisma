@@ -10,7 +10,7 @@ datasource db {
 
 // The customers service owns only its own database. companyId is a logical
 // reference into the auth service's Company table — no FK, no local Company
-// table (wayfinder ticket 06: per-service DBs, logical refs across services).
+// table (one database per service, logical refs across services).
 model Customer {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId String   @db.Uuid

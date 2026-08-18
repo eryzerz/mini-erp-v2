@@ -25,8 +25,8 @@ async function bootstrap(): Promise<void> {
         }),
     }),
   );
-  // No CORS: the browser only talks to the Vercel origin; edge + S2S legs are
-  // server-side (wayfinder ticket 10 — CORS_ORIGIN is removed from services).
+  // No CORS: the browser only talks to the Vercel origin; the edge and the
+  // S2S legs are server-side.
 
   const document = new DocumentBuilder()
     .setTitle("SLM ERP — Auth service")

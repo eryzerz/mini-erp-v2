@@ -4,10 +4,10 @@ import type { InvoicesSummaryDto } from "@repo/contracts";
 import { S2SClient, createS2SClient } from "@repo/common";
 
 /**
- * The dashboard forwards the caller's user JWT to the invoices service (ticket
- * 05): JwtAuthGuard over there scopes to the caller's company, and the shared
- * internal key rides along as the machine credential. The dashboard has no
- * database, so this leg is its only data source (tickets 06/08).
+ * The dashboard forwards the caller's user JWT to the invoices service, so its
+ * JwtAuthGuard scopes to the caller's company; the shared internal key rides
+ * along as the machine credential. The dashboard has no database, so this leg
+ * is its only data source.
  */
 @Injectable()
 export class InvoicesClient {
