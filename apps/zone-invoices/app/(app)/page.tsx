@@ -7,5 +7,6 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default function InvoicesHome(): React.ReactElement {
-  redirect("/invoices/list");
+  // BasePath-relative: Next prepends /invoices, yielding /invoices/list.
+  redirect("/list");
 }

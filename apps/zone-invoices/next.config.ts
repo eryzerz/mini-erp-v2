@@ -12,12 +12,10 @@ const localServices = {
 
 const nextConfig: NextConfig = {
   basePath: "/invoices",
-  // The dashboard project's edge rewrites route this zone by path prefix and
-  // forward the bare home as "/invoices/" (an empty :path* capture). A
-  // trailing-slash canonical home is what makes that hop a clean 200 instead
-  // of a 308 redirect loop, and client-side navigations to the home then get a
-  // valid RSC response instead of falling back to a full page load.
-  trailingSlash: true,
+  // Every layer (this app, its vercel.json, and the dashboard's edge) uses
+  // canonical no-trailing-slash URLs: trailingSlash:true here clashed with the
+  // platform's default strip, producing an endless 308 ping-pong on the
+  // dashboard origin. The bare /invoices home redirects to /invoices/list.
   transpilePackages: [
     "@repo/ui",
     "@repo/contracts",

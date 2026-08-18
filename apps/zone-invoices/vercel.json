@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "trailingSlash": false,
   "buildCommand": "pnpm --filter @repo/contracts build && pnpm --filter @repo/common build && next build",
   "rewrites": [
     {
