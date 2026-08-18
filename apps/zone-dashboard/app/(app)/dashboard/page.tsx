@@ -137,8 +137,9 @@ export default function DashboardPage(): React.ReactElement {
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Recent invoices</CardTitle>
               <Button asChild variant="outline" size="sm">
-                {/* The invoices list lives in its own zone (ticket 07). */}
-                <Link href={`${ZONE_BASE.invoices}`}>View all</Link>
+                {/* The invoices list lives in its own zone. A plain anchor so
+                    the invoices zone's basePath is not prepended. */}
+                <a href={ZONE_BASE.invoices}>View all</a>
               </Button>
             </CardHeader>
             <CardContent>

@@ -2,7 +2,6 @@
 
 import { LogOut, Moon, Sun, X } from "lucide-react";
 import { useTheme } from "next-themes";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -63,13 +62,17 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
   const nav = (
     <nav className="flex flex-col gap-1 p-3" aria-label="Main navigation">
       {NAV.filter((item) => !item.adminOnly || user?.role === "ADMIN").map((item) => {
-        // Cross-zone links point at real URLS (other zones); active state only
-        // meaningfully matches the current zone's link, so compare the pathname
-        // portion — no window access at render (this page also prerenders).
+        // Cross-zone links are plain anchors: next/link and the router
+        // auto-prepend this zone's basePath to relative hrefs (doubling
+        // /customers -> /customers/customers), and client-side navigation
+        // cannot cross into another Next app anyway — a full page load through
+        // the single-origin proxy is the only correct hop. Active state only
+        // meaningfully matches the current zone's link, so compare the
+        // pathname portion — no window access at render (also prerenders).
         const path = item.href.replace(/^https?:\/\/[^/]+/, "");
         const active = pathname.startsWith(path);
         return (
-          <Link
+          <a
             key={item.href}
             href={item.href}
             onClick={() => setMobileOpen(false)}
@@ -81,7 +84,7 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
             )}
           >
             {item.label}
-          </Link>
+          </a>
         );
       })}
     </nav>
@@ -91,9 +94,9 @@ export const AppShell = ({ children }: { children: React.ReactNode }): React.Rea
     <div className="flex min-h-screen">
       <aside className="hidden w-56 shrink-0 border-r bg-card md:block">
         <div className="flex h-14 items-center border-b px-4">
-          <Link href={ZONE_BASE.dashboard} className={`text-sm font-semibold tracking-tight rounded-sm ${FOCUS_RING}`}>
+          <a href={ZONE_BASE.dashboard} className={`text-sm font-semibold tracking-tight rounded-sm ${FOCUS_RING}`}>
             SLM <span className="text-primary">ERP</span>
-          </Link>
+          </a>
         </div>
         {nav}
       </aside>

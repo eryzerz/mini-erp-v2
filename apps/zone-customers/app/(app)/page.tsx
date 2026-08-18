@@ -35,7 +35,9 @@ export default function CustomersPage(): React.ReactElement {
       }
     }
     const str = params.toString();
-    router.replace(`/customers${str ? `?${str}` : ""}`);
+    // Zone-relative root: the router auto-prepends this zone's basePath, so
+    // "/" resolves to /customers (a bare "/customers" would double it).
+    router.replace(`/${str ? `?${str}` : ""}`);
   };
 
   const confirmDelete = async (): Promise<void> => {

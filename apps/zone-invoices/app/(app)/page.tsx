@@ -33,7 +33,9 @@ export default function InvoicesPage(): React.ReactElement {
       }
     }
     const str = params.toString();
-    router.replace(`/invoices${str ? `?${str}` : ""}`);
+    // Zone-relative root: the router auto-prepends this zone's basePath, so
+    // "/" resolves to /invoices (a bare "/invoices" would double it).
+    router.replace(`/${str ? `?${str}` : ""}`);
   };
 
   return (
