@@ -2,18 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DashboardSummary, Paginated, UserDto, UserRole } from "@repo/contracts";
-import { api } from "@repo/web-shared";
-
-const queryString = (params: Record<string, string | number | undefined>): string => {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== "") {
-      search.set(key, String(value));
-    }
-  }
-  const str = search.toString();
-  return str ? `?${str}` : "";
-};
+import { api, queryString } from "@repo/web-shared";
 
 export const useDashboard = (params: { from?: string; to?: string } = {}) =>
   useQuery({
