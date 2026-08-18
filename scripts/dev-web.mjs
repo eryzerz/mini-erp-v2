@@ -46,6 +46,49 @@ const targetFor = (pathname) => {
   return TARGETS.dashboard;
 };
 
+// Ports each process in the dev topology is expected to own.
+const EXPECTED_PORTS = [
+  ...new Set([
+    PORT,
+    ...Object.values(TARGETS).map((url) => new URL(url).port),
+  ]),
+].map(Number);
+
+const listenCheck = (port) =>
+  new Promise((resolve) => {
+    const socket = net.connect({ port, host: "127.0.0.1" });
+    socket.setTimeout(500);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once("error", () => resolve(false));
+  });
+
+// Fail fast with a clear report instead of a half-broken `pnpm dev`: a stale
+// fleet (or a previous run that was Ctrl-C'd awkwardly) leaves listeners on the
+// dev ports, and the tasks then die one by one with opaque EADDRINUSE noise.
+const refuseIfPortsBusy = async () => {
+  const result = await Promise.all(
+    EXPECTED_PORTS.map(async (port) => ({ port, busy: await listenCheck(port) })),
+  );
+  const busy = result.filter((r) => r.busy);
+  if (busy.length === 0) {
+    return;
+  }
+  console.error("\n[dev-web] Ports already in use — a previous dev fleet is still running:");
+  for (const { port } of busy) {
+    console.error(`  :${port}`);
+  }
+  console.error("\nStop it first, e.g. for each port:  kill -9 $(lsof -ti :PORT)");
+  console.error("or, on Linux:  fuser -k 3000/tcp 3001/tcp 3002/tcp 3004/tcp 4001/tcp 4002/tcp 4003/tcp 4004/tcp\n");
+  process.exit(1);
+};
+
 const server = createServer((req, res) => {
   const target = targetFor(req.url ?? "/");
   const proxy = httpRequest(
@@ -84,17 +127,24 @@ const shutdown = () => {
   setTimeout(() => process.exit(0), 2000).unref();
 };
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`\n[dev-web] single origin ready at http://localhost:${PORT}`);
-  console.log(`[dev-web] dashboard: / :3004 · customers: /customers · invoices: /invoices`);
-  console.log("[dev-web] API: /api/v1/{auth,users,customers,invoices,dashboard}/*\n");
-});
+const bootstrap = async () => {
+  await refuseIfPortsBusy();
 
-// Ctrl-C / SIGTERM should take down the turbo dev fleet we started too.
-const turbo = spawn("pnpm", ["run", "dev:apps"], { stdio: "inherit" });
-const teardown = () => {
-  turbo.kill("SIGINT");
-  shutdown();
+  server.listen(PORT, "127.0.0.1", () => {
+    console.log(`\n[dev-web] single origin ready at http://localhost:${PORT}`);
+    console.log(`[dev-web] dashboard: / :3004 · customers: /customers · invoices: /invoices`);
+    console.log("[dev-web] API: /api/v1/{auth,users,customers,invoices,dashboard}/*\n");
+  });
+
+  // Ctrl-C / SIGTERM should take down the turbo dev fleet we started too.
+  const turbo = spawn("pnpm", ["run", "dev:apps"], { stdio: "inherit" });
+  const teardown = () => {
+    turbo.kill("SIGINT");
+    shutdown();
+  };
+  process.on("SIGINT", teardown);
+  process.on("SIGTERM", teardown);
 };
-process.on("SIGINT", teardown);
-process.on("SIGTERM", teardown);
+
+bootstrap();
+
