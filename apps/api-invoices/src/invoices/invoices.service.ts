@@ -11,7 +11,7 @@ import { computeInvoiceTotals, paginate } from "@repo/common";
 import type { Invoice } from "../generated/prisma/client";
 
 import { PrismaService } from "../prisma.service";
-import { CustomersClient } from "./customers.client";
+import { CustomersClient, CustomerSnapshot } from "./customers.client";
 import {
   CreateInvoiceDto,
   ListInvoicesQueryDto,
@@ -40,6 +40,24 @@ export class InvoicesService {
         `Invoice status ${invoice.status} does not allow this operation`,
       );
     }
+  }
+
+  /**
+   * Resolve and validate a customer's snapshot over S2S. Run at draft create
+   * and whenever a draft's customer changes, so the invoices database carries
+   * the name/taxId locally and drafts display their customer without further
+   * cross-service reads (previously only SEND snapshotted, leaving draft lists
+   * blank). A missing or foreign customer surfaces here as a domain error.
+   */
+  private async snapshotCustomer(companyId: string, customerId: string): Promise<CustomerSnapshot> {
+    const snapshot = await this.customers.getSnapshot(customerId);
+    if (!snapshot) {
+      throw new NotFoundException("Customer not found");
+    }
+    if (snapshot.companyId !== companyId) {
+      throw new ForbiddenException("Customer does not belong to this company");
+    }
+    return snapshot;
   }
 
   private async nextNumber(companyId: string, year: number): Promise<string> {
@@ -93,9 +111,11 @@ export class InvoicesService {
   }
 
   async create(actor: { companyId: string; sub: string }, dto: CreateInvoiceDto): Promise<InvoiceDto> {
-    // The customer lives in another service's database; the draft is created
-    // against the logical customerId with no cross-service read here (ticket 06
-    // makes SEND the only cross-service leg). A bad customerId surfaces at send.
+    // Resolve the customer snapshot up front so the draft carries the name and
+    // taxId locally (a draft whose customer vanished, or belongs to another
+    // company, is rejected here rather than silently left blank).
+    const snapshot = await this.snapshotCustomer(actor.companyId, dto.customerId);
+
     const totals = computeInvoiceTotals(
       dto.items.map((item) => ({ ...item, taxRate: item.taxRate ?? "0" })),
     );
@@ -107,6 +127,8 @@ export class InvoicesService {
           customerId: dto.customerId,
           createdById: actor.sub,
           dueDate: new Date(dto.dueDate),
+          customerName: snapshot.name,
+          customerTaxId: snapshot.taxId,
           subtotal: totals.subtotal,
           taxTotal: totals.taxTotal,
           total: totals.total,
@@ -190,6 +212,13 @@ export class InvoicesService {
         ? computeInvoiceTotals(items.map((item) => ({ ...item, taxRate: item.taxRate ?? "0" })))
         : undefined;
 
+    // If the draft's customer changes, refresh the local name/taxId snapshot so
+    // the stored summary always matches the customer the draft is billed to.
+    const customerSnapshot =
+      dto.customerId && dto.customerId !== invoice.customerId
+        ? await this.snapshotCustomer(actor.companyId, dto.customerId)
+        : undefined;
+
     const updated = await this.prisma.$transaction(async (tx) => {
       if (items.length > 0) {
         await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
@@ -198,6 +227,9 @@ export class InvoicesService {
         where: { id },
         data: {
           ...(dto.customerId ? { customerId: dto.customerId } : {}),
+          ...(customerSnapshot
+            ? { customerName: customerSnapshot.name, customerTaxId: customerSnapshot.taxId }
+            : {}),
           ...(dto.dueDate ? { dueDate: new Date(dto.dueDate) } : {}),
           ...(totals
             ? {
@@ -231,21 +263,15 @@ export class InvoicesService {
     const invoice = await this.getOwnedInvoice(actor.companyId, id);
     this.assertStatus(invoice, [InvoiceStatus.DRAFT]);
 
-    // The fleet's only cross-service read (ticket 06): capture the customer
-    // name + taxId snapshot at first SEND so later reads never need the
-    // customers service.
-    const snapshot = await this.customers.getSnapshot(invoice.customerId);
-    if (!snapshot) {
-      throw new NotFoundException("Customer not found");
-    }
-    if (snapshot.companyId !== invoice.companyId) {
-      throw new ForbiddenException("Customer does not belong to this company");
-    }
+    // Re-resolve the customer snapshot at first SEND (the fleet's original
+    // cross-service leg): guards against a customer deleted since the draft was
+    // saved, and refreshes the stored name/taxId for the issued invoice.
+    const snapshot = await this.snapshotCustomer(actor.companyId, invoice.customerId);
 
     const number = await this.nextNumber(actor.companyId, new Date().getFullYear());
-    // Known limitation (inherited from the monolith): nextNumber reads outside
-    // the transaction, so two concurrent SENDs can pick the same number; the
-    // @@unique([companyId, number]) constraint backstops the collision.
+    // nextNumber reads outside the transaction, so two concurrent SENDs could
+    // pick the same number; the @@unique([companyId, number]) constraint
+    // backstops the collision.
     return this.transition(id, actor, invoice, InvoiceStatus.SENT, {
       number,
       issueDate: new Date(),

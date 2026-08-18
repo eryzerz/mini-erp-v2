@@ -17,9 +17,10 @@ enum InvoiceStatus {
 
 // The invoices service owns only its own database. companyId, customerId and
 // createdById are logical references into the auth / customers databases — no
-// FKs, no local tables (wayfinder ticket 06: per-service DBs, logical refs).
-// The customer name/taxId snapshot is captured from the customers service at
-// first SEND (the fleet's only cross-service read).
+// FKs, no local tables (one database per service).
+// The customer name/taxId snapshot is captured from the customers service when
+// a draft is saved (create/update) and re-validated at first SEND, so invoices
+// read locally without further cross-service calls.
 model Invoice {
   id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   companyId    String              @db.Uuid

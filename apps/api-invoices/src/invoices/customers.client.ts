@@ -6,10 +6,9 @@ import { S2SClient, createS2SClient } from "@repo/common";
 export type CustomerSnapshot = InternalCustomerDto;
 
 /**
- * The customers service is the only cross-service dependency in the fleet
- * (wayfinder ticket 06: snapshot a customer at first SEND). It is reached over
- * the internal API key; a missing customer surfaces as null so the caller can
- * translate it into a domain error.
+ * The customers service is the invoices service's only cross-service
+ * dependency. Reached over the internal API key; a missing customer surfaces
+ * as null so the caller can translate it into a domain error.
  */
 @Injectable()
 export class CustomersClient {

@@ -12,6 +12,7 @@ describe("InvoicesService (lifecycle)", () => {
     invoice: {
       findFirst: jest.Mock;
       findMany: jest.Mock;
+      create: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
     };
@@ -68,6 +69,7 @@ describe("InvoicesService (lifecycle)", () => {
       invoice: {
         findFirst: jest.fn(),
         findMany: jest.fn(),
+        create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
       },
@@ -86,6 +88,98 @@ describe("InvoicesService (lifecycle)", () => {
     }).compile();
 
     service = module.get(InvoicesService);
+  });
+
+  describe("create", () => {
+    const dto = {
+      customerId: "cust-1",
+      dueDate: "2026-09-15",
+      items: [{ description: "Konsultasi", quantity: "1.0000", unitPrice: "750000.0000", taxRate: "11.00" }],
+    };
+
+    it("snapshots the customer so the draft displays its name", async () => {
+      customers.getSnapshot.mockResolvedValue(snapshot);
+      prisma.invoice.create.mockResolvedValue({
+        ...baseInvoice,
+        customerName: snapshot.name,
+        customerTaxId: snapshot.taxId,
+      });
+
+      const result = await service.create(actor, dto);
+
+      expect(customers.getSnapshot).toHaveBeenCalledWith("cust-1");
+      expect(prisma.invoice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customerName: snapshot.name,
+            customerTaxId: snapshot.taxId,
+          }),
+        }),
+      );
+      expect(result.customer).toEqual({ id: "cust-1", name: snapshot.name });
+    });
+
+    it("rejects creating a draft for a customer that no longer exists", async () => {
+      customers.getSnapshot.mockResolvedValue(null);
+
+      await expect(service.create(actor, dto)).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.invoice.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects creating a draft for a customer of another company", async () => {
+      customers.getSnapshot.mockResolvedValue({ ...snapshot, companyId: "company-2" });
+
+      await expect(service.create(actor, dto)).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.invoice.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("update", () => {
+    it("refreshes the customer snapshot when the draft's customer changes", async () => {
+      prisma.invoice.findFirst.mockResolvedValue(baseInvoice);
+      customers.getSnapshot.mockResolvedValue(snapshot);
+      prisma.invoice.update.mockResolvedValue({
+        ...baseInvoice,
+        customerId: "cust-2",
+        customerName: snapshot.name,
+        customerTaxId: snapshot.taxId,
+      });
+
+      const result = await service.update(actor, "inv-1", {
+        customerId: "cust-2",
+        dueDate: "2026-12-31",
+        items: [],
+      });
+
+      expect(customers.getSnapshot).toHaveBeenCalledWith("cust-2");
+      expect(prisma.invoice.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customerId: "cust-2",
+            customerName: snapshot.name,
+            customerTaxId: snapshot.taxId,
+          }),
+        }),
+      );
+      expect(result.customer).toEqual({ id: "cust-2", name: snapshot.name });
+    });
+
+    it("keeps the stored snapshot when the customer is unchanged", async () => {
+      prisma.invoice.findFirst.mockResolvedValue({
+        ...baseInvoice,
+        customerName: snapshot.name,
+        customerTaxId: snapshot.taxId,
+      });
+      prisma.invoice.update.mockResolvedValue({
+        ...baseInvoice,
+        customerName: snapshot.name,
+        customerTaxId: snapshot.taxId,
+      });
+
+      await service.update(actor, "inv-1", { dueDate: "2026-12-31" });
+
+      expect(customers.getSnapshot).not.toHaveBeenCalled();
+    });
   });
 
   describe("send", () => {

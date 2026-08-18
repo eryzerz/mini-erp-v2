@@ -47,8 +47,8 @@ describe("Invoices (e2e)", () => {
     process.env.DATABASE_URL_INVOICES = testUrl;
     execSync(`DATABASE_URL_INVOICES=${testUrl} pnpm exec prisma migrate deploy`, { stdio: "pipe" });
 
-    // Stand-in for the customers service's internal endpoint (ticket 06: the
-    // invoices service snapshots a customer over S2S at SEND). Enforces the
+    // Stand-in for the customers service's internal endpoint (the invoices service
+    // snapshots a customer over S2S at draft save and send). Enforces the
     // internal key so the header wiring is exercised for real.
     fakeCustomers = createServer((req, res) => {
       const send = (status: number, body: unknown) => {
@@ -97,7 +97,7 @@ describe("Invoices (e2e)", () => {
     await request(app.getHttpServer()).get("/api/v1/invoices").expect(401);
   });
 
-  it("creates a draft with computed totals and no number", async () => {
+  it("creates a draft with a customer snapshot and computed totals but no number", async () => {
     const token = await tokenFor(UserRole.ACCOUNTANT, companyA);
     const res = await request(app.getHttpServer())
       .post("/api/v1/invoices")
@@ -107,7 +107,8 @@ describe("Invoices (e2e)", () => {
 
     expect(res.body.status).toBe("DRAFT");
     expect(res.body.number).toBeNull();
-    expect(res.body.customer).toBeUndefined();
+    expect(res.body.issueDate).toBeNull();
+    expect(res.body.customer).toEqual({ id: customerA, name: "PT Maju Jaya" });
     // 2×750000 = 1500000 + 11% = 165000 → subtotal 5000000 (2 lines), tax 165000, total 5165000
     expect(res.body.subtotal).toBe("5000000.00");
     expect(res.body.taxTotal).toBe("165000.00");
@@ -198,31 +199,21 @@ describe("Invoices (e2e)", () => {
       .expect(409);
   });
 
-  it("rejects sending when the customer no longer exists", async () => {
+  it("rejects creating a draft when the customer no longer exists", async () => {
     const token = await tokenFor(UserRole.ACCOUNTANT, companyA);
-    const created = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post("/api/v1/invoices")
       .set("Authorization", `Bearer ${token}`)
       .send(draft(strangerCustomer))
-      .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`/api/v1/invoices/${created.body.id}/send`)
-      .set("Authorization", `Bearer ${token}`)
       .expect(404);
   });
 
-  it("rejects sending an invoice for a customer of another company", async () => {
+  it("rejects creating a draft for a customer of another company", async () => {
     const token = await tokenFor(UserRole.ACCOUNTANT, companyA);
-    const created = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post("/api/v1/invoices")
       .set("Authorization", `Bearer ${token}`)
       .send(draft(foreignCustomer))
-      .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`/api/v1/invoices/${created.body.id}/send`)
-      .set("Authorization", `Bearer ${token}`)
       .expect(403);
   });
 
