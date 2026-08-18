@@ -1,8 +1,8 @@
 /**
- * Single-origin local dev launcher (wayfinder ticket 07): one browser origin on
- * PORT (default :3000) that routes each zone and the API fleet by path prefix —
- * the same topology the Vercel edge + microfrontends group provide in prod. This
- * keeps sessionStorage shared across zones, so cross-zone navigation keeps the
+ * Single-origin local dev launcher: one browser origin on PORT (default :3000)
+ * that routes each zone and the API fleet by path prefix — the same topology
+ * the Vercel edge + microfrontends group provide in prod. This keeps
+ * sessionStorage shared across zones, so cross-zone navigation keeps the
  * session instead of bouncing to login (three separate dev origins would not).
  *
  * Routing:
@@ -33,7 +33,13 @@ const TARGETS = {
   dashboard: `http://127.0.0.1:${process.env.DASHBOARD_ZONE_PORT ?? 3004}`,
 };
 
+// Match on the pathname only — req.url includes the query string, and a page
+// like /invoices?page=2 must still route by its path (/invoices), mirroring how
+// the Vercel edge path-routes in prod. Using the raw URL would let the query
+// break the prefix match and drop the request onto the dashboard fallback.
 const matches = (pathname, prefix) => pathname === prefix || pathname.startsWith(prefix + "/");
+
+const pathnameOf = (url) => new URL(url ?? "/", "http://localhost").pathname;
 
 const targetFor = (pathname) => {
   if (matches(pathname, "/api/v1/auth")) return TARGETS["api/auth"];
@@ -90,7 +96,7 @@ const refuseIfPortsBusy = async () => {
 };
 
 const server = createServer((req, res) => {
-  const target = targetFor(req.url ?? "/");
+  const target = targetFor(pathnameOf(req.url));
   const proxy = httpRequest(
     new URL(target),
     {
@@ -118,7 +124,7 @@ const server = createServer((req, res) => {
 // response (status line + headers + body), so the browser sees the truth and
 // can fall back gracefully.
 server.on("upgrade", (req, socket, head) => {
-  const target = new URL(targetFor(req.url ?? "/"));
+  const target = new URL(targetFor(pathnameOf(req.url)));
   // Connection resets on best-effort sockets are normal (clients navigate away,
   // close early, or a probe reads its response and disconnects). Swallow them —
   // an unhandled 'error' here would crash the whole proxy.
